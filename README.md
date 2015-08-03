@@ -209,9 +209,32 @@ If we inspect this with DevTools, we will see that there are two "elements" in t
 
 When there is a shadow DOM present, the browser will display that instead of the light DOM. But scripts trying to access the contents of the node will only see the default light DOM. Furthermore, because we defined the shadow root as `closed` at creation time, if a script tries to access the `node.shadowRoot` property they will just get `null`--showing the boundary in action.
 
-Browser support: Chrome and Opera implement "the Blink version". Firefox were working on it and you could try it if you enabled the right preference. But then all the browser vendors [had a meeting](https://www.w3.org/wiki/Webapps/WebComponentsApril2015Meeting) where they sat down and presented the issues they had found which hadn't surfaced in the initial version that Blink had implemented, and agreed on working on a "V1" minimally viable Shadow DOM spec, so several things that you might have already heard or read regarding Shadow DOM might have changed again. Conclusion: this spec is really unstable.
+Browser support: Chrome and Opera implement "the Blink version". Firefox were working on it and you could try it if you enabled the right preference. But then all the browser vendors [had a meeting](https://www.w3.org/wiki/Webapps/WebComponentsApril2015Meeting) where they sat down and presented the issues they had found which hadn't surfaced in the initial version that Blink had implemented, and agreed on working on a "V1" minimally viable Shadow DOM spec, so several things that you might have already heard or read regarding Shadow DOM might have changed again.
+
+Conclusion: this specification is really unstable. We, as browser vendors, encourage you to play with it and help us find edge and use cases, but you should be aware that things are going to change any time soon.
 
 #### HTML imports
+
+HTML imports allow you to include HTML documents from an HTML document. This lets you load external content into your document in a declarative way, and so some people call them *`require()` for the web*.
+
+Suppose you had this line in your document HTML:
+
+```html
+<link rel="import" href="my-component.html">
+```
+
+And then in `my-component.html`:
+
+```html
+<script src="my-component.js"></script>
+<link rel="stylesheet" href="my-component.css">
+```
+
+So `my-component.js` and `my-component.css` get parsed and are made available to the document that imported them via `my-component.html`. You could also have more imports inside `my-component.html`, and so on.
+
+This can cause a situation in which you need to wait for lots of network requests to finish loading before you can use a given import, so folks from Polymer made a utility called [Vulcanize](https://github.com/Polymer/vulcanize) that follows through all the import links in an import and generates just two files: HTML (with inlined JavaScript) and CSS.
+
+Support for HTML imports isn't too good: only Chrome and Opera support it. Firefox had an unfinished implementation but it will be removed, as Mozilla felt that the issues imports create far outweigh the advantages they provide, and also they want to see if it's possible to accomplish the same effect using ES6 modules--or maybe even if they are actually required at all. With the latest developments in the Fetch API and Service Workers we have several ways to get content into the browser and we'd prefer to make sure these are robust.
 
 ### Browser support, or "where/when/how can I use this?"
 
@@ -245,7 +268,10 @@ Browser support: Chrome and Opera implement "the Blink version". Firefox were wo
 * [Custom Elements](http://w3c.github.io/webcomponents/spec/custom/) specification
 * [Custom Elements documentation](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Custom_Elements)
 * [HTML Templates documentation](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template).
+* [Shadow DOM](http://w3c.github.io/webcomponents/spec/shadow/) specification.
+* [The State of Web Components](https://hacks.mozilla.org/2015/06/the-state-of-web-components/) - a blog post discussing the state of Web Components, why we are where we are, and Mozilla's position on each API.
 * [Minutes](http://www.w3.org/2015/07/21-webapps-minutes.html) from the Face to Face meeting 21 July 2015--many contentious bits were discussed with various browser vendors present in this meeting.
+* [Update on standardizing Shadow DOM and Custom Elements](https://annevankesteren.nl/2015/07/shadow-dom-custom-elements-update) - a post describing the pain points on Custom Elements that are delaying its implementation across browsers.
 
 ### Firefox implementation
 
