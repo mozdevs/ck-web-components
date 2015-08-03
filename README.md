@@ -189,6 +189,27 @@ Support is pretty good: Firefox, Chrome, Opera and Safari and [in development](h
 
 #### Shadow DOM
 
+The <a href="http://w3c.github.io/webcomponents/spec/shadow/">Shadow DOM</a> lets you have multiple DOM trees inside a hierarchy and have them interact with each other, with the main goal being having better composition.
+
+It is also quite complicated to understand, so it has sometimes been informally defined as "now you see it, now you don’t", as it lets you replace the *normal* HTML tree in the normal hierarchy (the *light DOM*) with another HTML tree which is not visible from the outside (the *shadow DOM*).
+
+To do this, the browser creates a boundary around your element inside which you can place mark-up that *may* stay hidden to external elements, and you also have an option to reset and isolate CSS styles.
+
+This is *superuseful* for things such as players or calendars as there won't be inherited styles that you have to reset, etc, but it is still executed in the same document context; Shadow DOMs are not iframes and so they are not inherently more secure, JavaScript wise.
+
+A simple Shadow DOM example:
+
+```javascript
+node.innerHTML = 'This is the light DOM';
+var shadow = node.createShadowRoot({ mode: 'closed' });
+shadowRoot.innerHTML = 'The Shadow DOM has taken over';
+```
+
+If we inspect this with DevTools, we will see that there are two "elements" in the content of the node. The "light DOM" that we initially set, and the "shadow DOM".
+
+When there is a shadow DOM present, the browser will display that instead of the light DOM. But scripts trying to access the contents of the node will only see the default light DOM. Furthermore, because we defined the shadow root as `closed` at creation time, if a script tries to access the `node.shadowRoot` property they will just get `null`--showing the boundary in action.
+
+Browser support: Chrome and Opera implement "the Blink version". Firefox were working on it and you could try it if you enabled the right preference. But then all the browser vendors [had a meeting](https://www.w3.org/wiki/Webapps/WebComponentsApril2015Meeting) where they sat down and presented the issues they had found which hadn't surfaced in the initial version that Blink had implemented, and agreed on working on a "V1" minimally viable Shadow DOM spec, so several things that you might have already heard or read regarding Shadow DOM might have changed again. Conclusion: this spec is really unstable.
 
 #### HTML imports
 
