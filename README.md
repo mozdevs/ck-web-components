@@ -63,7 +63,12 @@ This is shorter, cleaner, and easier to understand and maintain.
 
 ### How do we get there?
 
-By using Web Components! But as mentioned before, Web Components is not just one new big monolithic API, but a series of different features and APIs addressing different aspects.
+By using Web Components! But as mentioned before, Web Components is not just one new big monolithic API, but a series of different features and APIs addressing different aspects:
+
+* Custom Elements
+* HTML Templates
+* Shadow DOM
+* HTML imports
 
 Let's go through each of the features and see how it works and what does it address.
 
@@ -77,9 +82,9 @@ document.registerElement('web-bell', WebBellPrototype);
 
 Here `web-bell` is the tag name (just like `a`, `h1`, `table` etc are tag names) and `WebBellPrototype` defines the behaviour of instances of this custom element.
 
-All custom elements tags must include a hyphen. This is so that authors don't attempt to register elements that might already exist in the browser, either today or in the future. You can also use this as a way to create namespaced elements (e.g. `mozilla-calendar`).
+All custom elements tag names must include a hyphen. This is so that authors don't attempt to register elements that might already exist in the browser, either today or in the future. You can also use this as a way to create namespaced elements (e.g. `mozilla-calendar`).
 
-A custom element prototype extends at least `HTMLElement.prototype`--this is what makes it possible to insert custom element instances into the DOM tree. It might also choose to implement certain life cycle callbacks, and its own methods, getters and setters. Following on the example:
+A custom element prototype extends at least `HTMLElement.prototype`--this is what makes it possible to insert custom element instances into the DOM tree. It might also implement certain life cycle callbacks, and its own methods, getters and setters. Following on the example:
 
 ```javascript
 var WebBellPrototype = Object.create(HTMLElement.prototype);
@@ -155,8 +160,36 @@ But apparently implementing this type of extensibility is complicated to impleme
 
 Custom elements are supported in: Firefox, Chrome and Opera.
 
-#### Templates
+#### HTML Templates
+
+HTML Templates are inert HTML chunks and they are not live "until you say so". The browser just essentially ignores them until you tell it otherwise. It is only then that it will parse that code.
+
+The way to define a template is by using the `<template>` element. For example, suppose we have a somewhat complicated piece of mark-up to create table rows, and we don't want to create each node manually with `document.createElement`:
+
+```html
+<template id="row-template">
+	<tr>
+	    <td><input .../></td>
+        <td><button .../></td>
+	</tr>
+</template>
+```
+
+Then we could create instances of rows as easily as this:
+
+```javascript
+var rowTemplate = document.getElementById('row-template');
+var table = document.getElementById('form-table');
+table.appendChild(rowTemplate.content.cloneNode());
+```
+
+HTML Templates are very simple. There is no two way binding, or string interpolation. They just "do what it says on the tin".
+
+Support is pretty good: Firefox, Chrome, Opera and Safari and [in development](https://status.modern.ie/templateelement) in Edge.
+
 #### Shadow DOM
+
+
 #### HTML imports
 
 ### Browser support, or "where/when/how can I use this?"
@@ -189,6 +222,8 @@ Custom elements are supported in: Firefox, Chrome and Opera.
 ### Specifications and discussions
 
 * [Custom Elements](http://w3c.github.io/webcomponents/spec/custom/) specification
+* [Custom Elements documentation](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Custom_Elements)
+* [HTML Templates documentation](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template).
 * [Minutes](http://www.w3.org/2015/07/21-webapps-minutes.html) from the Face to Face meeting 21 July 2015--many contentious bits were discussed with various browser vendors present in this meeting.
 
 ### Firefox implementation
