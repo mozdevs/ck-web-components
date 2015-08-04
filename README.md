@@ -236,15 +236,59 @@ This can cause a situation in which you need to wait for lots of network request
 
 Support for HTML imports isn't too good: only Chrome and Opera support it. Firefox had an unfinished implementation but it will be removed, as Mozilla felt that the issues imports create far outweigh the advantages they provide, and also they want to see if it's possible to accomplish the same effect using ES6 modules--or maybe even if they are actually required at all. With the latest developments in the Fetch API and Service Workers we have several ways to get content into the browser and we'd prefer to make sure these are robust.
 
-### Browser support, or "where/when/how can I use this?"
+### Browser support recap, or "where/when/how can I use this?"
 
-"Nothing is a standard until there's several browsers committed to it".
+* Chrome, Opera: everything
+* Firefox: Behind a flag, everything except HTML imports.
+* Safari: Templates.
+* Edge: they're going to implement Templates and Shadow DOM
 
-* Custom Elements polyfill http://webcomponents.org/polyfills/custom-elements/
+The thing you need to remember here is: "nothing is a standard until there's several browsers committed to it". So far the API you can use most safely is HTML templates, but there's only a few things you can do with it. This doesn't sound super exciting, does it?
 
-### Real-life use cases of Web Components in production
+### Polyfills
+
+The good news is that because this is *JavaScriptLandia*, **there are polyfills** that we can use to get a feeling of what a Web Components-powered future would be, and play and experiment with it. You might realise you have a particular use case that the people writing the specs didn't realise was possible, or the way you want your components to interact with other pieces of code might not be ideal, so you should give feedback to browser vendors / spec authors. It is also a fantastic way to get involved with the Web!
+
+* [webcomponents.js](https://github.com/WebComponents/webcomponentsjs) is the biggest. It polyfills custom elements, HTML imports, Shadow DOM and also <tt>WeakMap</tt> and Mutation Observers.
+* [webcomponents-lite.js](https://github.com/webcomponents/webcomponents-lite) is almost like the above, but it doesn't polyfill Shadow DOM.
+
+A note of warning, though: **polyfills are not free*. They come at a cost (bandwidth and processing) which is not trivial--specially when on mobile. Also, the Shadow DOM polyfill is a huge beast, and you might run into issues with Shadow DOM scoped selectors. That's why you can choose to not to use the Shadow DOM features via polyfills. Additionally there might be potential inconsistencies with the HTML imports polyfill: the way import requests block or not and their timing might be different between a native implementation and a polyfilled one. You can get weird bugs.
+
+### Should you use a web components framework? What about <a href="https://www.polymer-project.org/">Polymer</a>? <a href="http://x-tags.org/">X-Tag</a>? <a href="http://bosonic.github.io/">Bosonic</a>?
+
+These are *syntactic sugar to make vanilla web components less sour*. They are built on top of the Web Components pillars, or on the polyfills, but they are *not* shipped with the browser.
+
+Their advantage versus using raw Web Components code or vanilla JavaScript to implement them is that if something changes in the native browser layer, you just need to update the frameworks to a newer version--not *your code*. But they're not conceptually that different from building "vanilla" Web Components, and they're not that different between them either.
+
+For example, here's how we would define a custom element with X-Tag:
+
+```javascript
+xtag.register('web-bell', {
+  extends: 'div',
+  lifecycle: {
+	created: function() {
+	  this.innerHTML = '🔔';
+	}
+  }
+});
+```
+
+And here's how you would do the same using Polymer:
+
+```javascript
+Polymer('web-bell', {
+  extends: 'div',
+  created: function() {
+	this.innerHTML = '🔔'
+  }
+});
+```
+
+So yes--they *are* nice. The only issue is that in order to use them, you also need to load the framework they were built on. So in the future, when Web Components are standard, a vanilla-based component will have less dependencies than a framework-based component.
 
 ### How do Web Components compare to JS frameworks? How well do they interoperate (or not)?
+
+### Real-life use cases of Web Components in production
 
 ## Demoing: Things that are Broken
 
@@ -272,6 +316,7 @@ Support for HTML imports isn't too good: only Chrome and Opera support it. Firef
 * [The State of Web Components](https://hacks.mozilla.org/2015/06/the-state-of-web-components/) - a blog post discussing the state of Web Components, why we are where we are, and Mozilla's position on each API.
 * [Minutes](http://www.w3.org/2015/07/21-webapps-minutes.html) from the Face to Face meeting 21 July 2015--many contentious bits were discussed with various browser vendors present in this meeting.
 * [Update on standardizing Shadow DOM and Custom Elements](https://annevankesteren.nl/2015/07/shadow-dom-custom-elements-update) - a post describing the pain points on Custom Elements that are delaying its implementation across browsers.
+* [Are we componentized yet?](http://jonrimmer.github.io/are-we-componentized-yet/) - tracking support for each API/feature on each browser.
 
 ### Firefox implementation
 
