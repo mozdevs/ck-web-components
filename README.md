@@ -2,6 +2,8 @@
 
 > Hopefully current as of August 2015 (but don't 100% trust it, these specs are changing pretty much every week)
 
+> **NOTE:** This Content Kit is not complete yet.
+
 ## Introduction
 
 * The Web today is much more than documents. Web 2.0 kickstarted a new era in complex apps and mash-ups that we hadn't thought of before, yet we're still building complex UIs with just rudimentary browser support and aggregating code that comes from many different vendors and origins. This can create a number of issues: side effects, CSS bleeding, bloated code and really bad mark-up.
@@ -487,7 +489,7 @@ Because we're cloning non-inert content--by the time Angular or Ember start usin
 
 #### Solutions?
 
-Set `innerHTML = '';` or wait until `attachedCallback` to append elements to the DOM.
+Set `innerHTML = '';` in `createdCallback`, or wait until `attachedCallback` to append elements to the DOM.
 
 #### Are you **sure** Web Components are a good idea?
 
@@ -543,12 +545,14 @@ to
 
 ### Web Components
 
-
+TO DO.
 
 ### DevTools
 
 * Shadow DOM inspection
 * ...
+
+TO DO.
 
 ## Reference Materials
 
@@ -564,6 +568,8 @@ to
 * [Are we componentized yet?](http://jonrimmer.github.io/are-we-componentized-yet/) - tracking support for each API/feature on each browser.
 
 ### Firefox implementation
+
+TO DO.
 
 ### Developer Tools
 
