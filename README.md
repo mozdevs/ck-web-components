@@ -249,7 +249,7 @@ The thing you need to remember here is: "nothing is a standard until there's sev
 
 The good news is that because this is *JavaScriptLandia*, **there are polyfills** that we can use to get a feeling of what a Web Components-powered future would be, and play and experiment with it. You might realise you have a particular use case that the people writing the specs didn't realise was possible, or the way you want your components to interact with other pieces of code might not be ideal, so you should give feedback to browser vendors / spec authors. It is also a fantastic way to get involved with the Web!
 
-* [webcomponents.js](https://github.com/WebComponents/webcomponentsjs) is the biggest. It polyfills custom elements, HTML imports, Shadow DOM and also <tt>WeakMap</tt> and Mutation Observers.
+* [webcomponents.js](https://github.com/WebComponents/webcomponentsjs) is the biggest. It polyfills custom elements, HTML imports, Shadow DOM and also `WeakMap` and Mutation Observers.
 * [webcomponents-lite.js](https://github.com/webcomponents/webcomponents-lite) is almost like the above, but it doesn't polyfill Shadow DOM.
 
 A note of warning, though: **polyfills are not free*. They come at a cost (bandwidth and processing) which is not trivial--specially when on mobile. Also, the Shadow DOM polyfill is a huge beast, and you might run into issues with Shadow DOM scoped selectors. That's why you can choose to not to use the Shadow DOM features via polyfills. Additionally there might be potential inconsistencies with the HTML imports polyfill: the way import requests block or not and their timing might be different between a native implementation and a polyfilled one. You can get weird bugs.
@@ -288,7 +288,252 @@ So yes--they *are* nice. The only issue is that in order to use them, you also n
 
 ### How do Web Components compare to JS frameworks? How well do they interoperate (or not)?
 
+The beauty of components is that they’re just DOM elements. We *should* be able to use them across frameworks... but that's not often the case when used intuitively.
+
+Here's how they work (or not) with some of the most common frameworks.
+
+#### jQuery
+
+It works quite well!
+
+Creating instances with attributes and properties works as expected:
+
+```javascript
+$('<web-bell loud></web-bell>');
+```
+
+Be careful when setting properties:
+
+```javascript
+$('random-square').width = 15 ; // no
+$('random-square')[0].width = 15; // yes
+```
+
+#### React
+
+Works better the simpler your elements are:
+
+* Inheriting from the `HTMLElement` prototype
+* Not using certain attributes
+
+You can't use custom elements by name in JSX 0.12 (fixed in 0.13)
+
+```javascript
+var RandomSquareReact = React.createClass({
+	render: function() {
+		return <random-square></random-square>
+	}
+});
+```
+
+Using `<tt>is=""</tt>` with JSX doesn't work
+
+```javascript
+var ComponentWithBellButton = React.createClass({
+	render: function() {
+	  return (
+		<div>Look at that button 
+		  <button is="bell-button"></button>
+		</div>
+	  );
+	}
+});
+
+```
+
+Some attributes are sanitised out
+
+```
+React.createElement('random-square', {
+  width: 150, // OK
+  height: 25, // OK
+  colour: '#f0f' // XXX
+});
+```
+
+I couldn't figure out how to access the actual DOM so I'm not sure how to call methods or set properties in the custom elements.
+
+#### Ember
+
+You can use custom elements in Handlebars templates
+
+```html
+<script type="text/x-handlebars">
+<random-square></random-square>
+</script>
+```
+
+Remember to unescape variable values set in JavaScript:
+
+```html
+<script type="text/x-handlebars">
+	{{{variableName}}}
+</script>
+```
+
+Two way binding works:
+
+```html
+{{input type="range" value=squareWidth step="1" min="1" max="200" }}
+<random-square {{bind-attr width=squareWidth}}></random-square>
+```
+
+There are Ember components:
+
+```html
+<script type="text/x-handlebars" id="components/random-square">
+  <random-square></random-square>
+</script>
+```
+
+```javascript
+App.RandomSquare = Ember.Component.extend({
+	tagName: 'span'
+});
+```
+
+```html
+{{random-square}}
+```
+
+But using `<tt>is=""</tt>` inside Ember components makes them use the wrong prototype:
+
+```html
+<script type="text/x-handlebars" id="components/bell-button">
+	<button is="bell-button"></button>
+</script>
+```
+
+Also: don't use `<tt>id</tt>` properties in top level tags; Ember will overwrite them.
+
+#### Angular
+
+Code is escaped as in Ember:
+
+```html
+<span ng-repeat="bell in bellbuttons">
+	{{bell}}
+</span>
+ 
+```javascript
+$scope.bellbuttons = [ '<button is="bell-button"/>' ];
+```
+
+outputs, literally: `<button is="bell-button"/>`.
+
+Create elements in **directives** instead:
+
+```javascript
+.directive('my-thing', function() {
+	return {
+		//...
+		template: '<my-thing></my-thing>'
+	}
+});
+```
+
+Two-way binding works too:
+
+```html
+<input type="text" ng-model="width" value="50">
+<random-square width="{{width}}"></random-square>
+```
+
+#### The joint Ember and Angular *weirdness*: extraneous elements with custom elements in templates
+
+##### Ember weirdness example
+
+```html
+<script type="text/x-handlebars" id="components/random-square">
+	<random-square></random-square>
+</script>
+```
+
+```html
+{{random-square}}
+```
+
+```html
+<random-square>
+	<canvas></canvas>
+	<canvas></canvas>
+</random-square>
+```
+
+##### Angular weirdness example
+
+```html
+<span ng-repeat="square in squares">
+  <random-square></random-square>
+</span>
+```
+
+```html
+<span>
+	<random-square>
+		<canvas></canvas>
+		<canvas></canvas>
+	</random-square>
+	<random-square>
+		<canvas></canvas>
+		<canvas></canvas>
+	</random-square>
+</span>
+```
+
+But why?
+
+Because we're cloning non-inert content--by the time Angular or Ember start using the templates, these have been parsed by the browser, which found out those were custom elements, and created the `<canvas>` element when calling the `createdCallback` method. Then the framework takes that parsed content and starts cloning content with children--and then the `createdCallback` is called *again*. So you end up having two children, one of which is extraneous.
+
+#### Solutions?
+
+Set `innerHTML = '';` or wait until `attachedCallback` to append elements to the DOM.
+
+#### Are you **sure** Web Components are a good idea?
+
+Modularising and isolating your code **is a good idea**. I call this **defensive design**. Even if platform support is not there yet, you can (should!) think in terms of components already.
+
+Don’t tie your code to an specific framework; it makes code easier to share or reuse.
+
+If you can afford to experiment, go **full in**, use the edgiest features and provide feedback to browser vendors and spec editors!
+
+But if you can’t control the environment, err on the safest side: use custom elements only.
+
+##### Fail-safe custom elements recipe
+
+* Use the smallest polyfill
+* Don’t use the `is=""` syntax
+* Have a `.js` and `.css` per component
+* Use existing tooling to minimise all your `.js` and `.css`
+* Be aware of React/Ember/Angular/... weirdnesses
+* Don’t take anything for granted. Set defaults everywhere!
+
+As you start refactoring, your <del>controllers</del> code will get leaner and <del>more expressive</del> beautiful.
+
+You'll go from
+
+```html
+<div class="widget calendar ui theme-winter">
+	<div class="component-wrapper">
+		<div class="inner-content">
+			(ad nauseam)
+		</div>
+	</div>
+</div>
+```
+
+to
+
+```html
+<x-calendar></x-calendar>
+```
+
 ### Real-life use cases of Web Components in production
+
+* Example: Firefox OS refactored to use web components for UI elements. The components have then been extracted and can be used somewhere else! So you get "Firefox OS" native look and feel, and can use all the baked in accessibility and localisation work that has already been baked into them.
+* Example: the Guardian's dashboard using Polymer + Material design comps (internal)
+* Chrome's Platform Status is built on Polymer: https://www.chromestatus.com/features
+* GitHub `<time is="">` custom element for timestamps
 
 ## Demoing: Things that are Broken
 
